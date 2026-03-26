@@ -2,93 +2,210 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Elite Hack Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Admin Control v3.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>body { background: #020617; color: white; user-select: text !important; }</style>
+    <style>
+        body { background: #020617; color: white; font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; }
+        .tab-btn.active { border-bottom: 3px solid #06b6d4; color: #06b6d4; }
+        .hidden-tab { display: none; }
+    </style>
 </head>
-<body class="p-6">
-    <div class="max-w-4xl mx-auto">
-        <header class="flex justify-between items-center mb-10 border-b border-white/5 pb-6">
-            <h1 class="text-3xl font-black text-cyan-400">ADMIN <span class="text-white text-sm font-light">v2.0 Realtime</span></h1>
-            <div class="flex gap-4">
-                <div class="bg-slate-900 px-5 py-2 rounded-xl text-center"><p class="text-[10px] text-gray-500">USERS</p><h2 id="total_users" class="font-bold">0</h2></div>
-                <div class="bg-slate-900 px-5 py-2 rounded-xl text-center"><p class="text-[10px] text-gray-500">PENDING</p><h2 id="total_req" class="text-orange-500 font-bold">0</h2></div>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-black text-cyan-400">COMMAND <span class="text-white">CENTER</span></h1>
+                <p class="text-gray-500 text-xs uppercase tracking-widest">Wingo Hack Management System</p>
+            </div>
+            <div class="grid grid-cols-3 gap-3 w-full md:w-auto">
+                <div class="bg-slate-900/80 p-4 rounded-2xl border border-white/5 text-center">
+                    <p class="text-[10px] text-gray-500 uppercase">Users</p>
+                    <h2 id="stat_users" class="text-xl font-bold">0</h2>
+                </div>
+                <div class="bg-slate-900/80 p-4 rounded-2xl border border-white/5 text-center">
+                    <p class="text-[10px] text-gray-500 uppercase">Requests</p>
+                    <h2 id="stat_req" class="text-xl font-bold text-orange-500">0</h2>
+                </div>
+                <div class="bg-slate-900/80 p-4 rounded-2xl border border-white/5 text-center">
+                    <p class="text-[10px] text-gray-500 uppercase">Revenue</p>
+                    <h2 id="stat_rev" class="text-xl font-bold text-green-500">৳0</h2>
+                </div>
             </div>
         </header>
 
-        <div class="bg-slate-900 p-6 rounded-3xl mb-10 border border-white/5">
-            <h3 class="font-bold mb-4 text-sm uppercase text-gray-400 tracking-widest">Quick Approve</h3>
-            <div class="flex gap-2">
-                <input type="text" id="manual_id" placeholder="Paste User UID here..." class="bg-black/40 p-4 rounded-2xl flex-1 outline-none border border-white/5">
-                <button onclick="approve(document.getElementById('manual_id').value, 'VIP Manual')" class="bg-cyan-600 px-8 rounded-2xl font-black uppercase text-xs">Approve ID</button>
+        <nav class="flex gap-8 mb-8 border-b border-white/5 overflow-x-auto">
+            <button onclick="showTab('requests')" id="t-requests" class="tab-btn active pb-3 font-bold text-sm uppercase">Pending Req</button>
+            <button onclick="showTab('users')" id="t-users" class="tab-btn pb-3 font-bold text-sm uppercase">User Manager</button>
+            <button onclick="showTab('settings')" id="t-settings" class="tab-btn pb-3 font-bold text-sm uppercase">App Settings</button>
+        </nav>
+
+        <div id="tab-requests">
+            <div class="grid grid-cols-1 gap-4" id="req_list">
+                <p class="text-gray-600 italic">Scanning database for new requests...</p>
             </div>
         </div>
 
-        <h3 class="text-xl font-bold mb-6 flex items-center gap-2"><span>📥</span> Incoming Requests</h3>
-        <div id="req_list" class="space-y-4">
-            <div class="animate-pulse bg-slate-900 h-20 rounded-2xl"></div>
+        <div id="tab-users" class="hidden-tab">
+            <div class="glass-card p-6 mb-6">
+                <div class="relative">
+                    <input type="text" id="user_search" onkeyup="searchUsers()" placeholder="Search by Name or ID..." class="w-full bg-black/30 border border-white/10 p-4 rounded-xl outline-none focus:border-cyan-500 transition-all">
+                    <span class="absolute right-4 top-4 opacity-30">🔍</span>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left glass-card">
+                    <thead>
+                        <tr class="text-gray-500 text-xs uppercase border-b border-white/5">
+                            <th class="p-4">User</th>
+                            <th class="p-4">Plan</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user_table_body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-settings" class="hidden-tab">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="glass-card p-6">
+                    <h3 class="font-bold mb-4 text-cyan-400">Broadcast Notice</h3>
+                    <textarea id="notice_text" placeholder="এই নোটিশটি সব ইউজার অ্যাপে দেখতে পাবে..." class="w-full bg-black/30 border border-white/10 p-4 rounded-xl h-32 outline-none mb-4"></textarea>
+                    <button onclick="sendNotice()" class="bg-cyan-600 w-full py-3 rounded-xl font-bold uppercase text-xs">Update Notice</button>
+                </div>
+                <div class="glass-card p-6">
+                    <h3 class="font-bold mb-4 text-red-400">Danger Zone</h3>
+                    <p class="text-xs text-gray-500 mb-4">নিচের বাটনটি ক্লিক করলে পেন্ডিং থাকা সব রিকোয়েস্ট ডিলিট হয়ে যাবে।</p>
+                    <button onclick="clearRequests()" class="border border-red-500/50 text-red-500 w-full py-3 rounded-xl font-bold uppercase text-xs hover:bg-red-500/10">Clear All Requests</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
         const dbURL = "https://ff-esport-bd-9dbc0-default-rtdb.firebaseio.com";
 
-        function loadData() {
+        function showTab(name) {
+            document.querySelectorAll('[id^="tab-"]').forEach(t => t.classList.add('hidden-tab'));
+            document.getElementById('tab-' + name).classList.remove('hidden-tab');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('t-' + name).classList.add('active');
+        }
+
+        function loadAll() {
+            // Load Statistics & Requests
             fetch(`${dbURL}/requests.json`).then(res => res.json()).then(data => {
                 const list = document.getElementById('req_list');
                 list.innerHTML = "";
                 if(!data) { 
-                    list.innerHTML = "<p class='text-center text-gray-600 py-10'>No pending requests found.</p>";
-                    document.getElementById('total_req').innerText = 0; 
+                    list.innerHTML = "<div class='text-center py-20 text-gray-600'>No Pending Requests</div>";
+                    document.getElementById('stat_req').innerText = 0;
                     return; 
                 }
-                
                 let count = 0;
                 Object.keys(data).reverse().forEach(key => {
                     const r = data[key];
                     count++;
                     list.innerHTML += `
-                        <div class="bg-slate-900 p-6 rounded-3xl flex justify-between items-center border border-white/5 hover:border-cyan-500/30 transition-all">
+                        <div class="glass-card p-6 flex flex-col md:flex-row justify-between items-center gap-4">
                             <div>
-                                <p class="font-black text-lg">${r.u_name} <span class="text-xs font-normal text-gray-500">(@${r.u_username})</span></p>
-                                <p class="text-xs font-mono text-cyan-400 mb-2">ID: ${r.u_id}</p>
-                                <div class="flex gap-3">
+                                <h4 class="font-black text-lg">${r.u_name} <span class="text-xs font-normal text-gray-500">(@${r.u_username})</span></h4>
+                                <p class="text-xs font-mono text-cyan-500">UID: ${r.u_id}</p>
+                                <div class="flex gap-2 mt-2">
                                     <span class="bg-orange-500/10 text-orange-500 text-[10px] px-2 py-1 rounded font-bold">${r.plan}</span>
                                     <span class="bg-green-500/10 text-green-500 text-[10px] px-2 py-1 rounded font-bold">TRX: ${r.trx}</span>
                                 </div>
                             </div>
-                            <button onclick="approve('${r.u_id}', '${r.plan}', '${key}')" class="bg-white text-black px-6 py-3 rounded-2xl font-black text-[10px] uppercase hover:bg-cyan-400 transition-colors">Approve</button>
+                            <div class="flex gap-2">
+                                <button onclick="approve('${r.u_id}', '${r.plan}', '${key}')" class="bg-cyan-600 px-6 py-3 rounded-xl font-black text-[10px] uppercase">Approve</button>
+                                <button onclick="deleteReq('${key}')" class="bg-red-600/20 text-red-500 px-4 py-3 rounded-xl font-black text-[10px] uppercase">Reject</button>
+                            </div>
                         </div>
                     `;
                 });
-                document.getElementById('total_req').innerText = count;
+                document.getElementById('stat_req').innerText = count;
             });
 
+            // Load User Table & Stats
             fetch(`${dbURL}/users.json`).then(res => res.json()).then(data => {
-                document.getElementById('total_users').innerText = data ? Object.keys(data).length : 0;
+                const tbody = document.getElementById('user_table_body');
+                tbody.innerHTML = "";
+                let userCount = 0;
+                let revenue = 0;
+
+                if(data) {
+                    Object.keys(data).forEach(id => {
+                        const u = data[id];
+                        userCount++;
+                        // Revenue Calculation Logic
+                        if(u.plan.includes("300")) revenue += 300;
+                        else if(u.plan.includes("650")) revenue += 650;
+                        else if(u.plan.includes("1400")) revenue += 1400;
+                        else if(u.plan.includes("2500")) revenue += 2500;
+
+                        tbody.innerHTML += `
+                            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                <td class="p-4"><p class="font-bold text-sm">${id}</p></td>
+                                <td class="p-4"><span class="text-xs text-cyan-400">${u.plan || 'Free'}</span></td>
+                                <td class="p-4"><span class="${u.isPaid ? 'text-green-500' : 'text-red-500'} text-xs font-bold uppercase">${u.isPaid ? 'Premium' : 'Unpaid'}</span></td>
+                                <td class="p-4">
+                                    <button onclick="removeUser('${id}')" class="text-red-500 text-[10px] uppercase font-bold hover:underline">Revoke Access</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                document.getElementById('stat_users').innerText = userCount;
+                document.getElementById('stat_rev').innerText = "৳" + revenue;
             });
         }
 
         function approve(uid, plan, key) {
-            if(!uid) return alert("UID missing!");
-            
-            // Critical Update: Set isPaid explicitly to true
             fetch(`${dbURL}/users/${uid}.json`, {
                 method: 'PATCH',
-                body: JSON.stringify({ 
-                    isPaid: true, 
-                    plan: plan, 
-                    activeDate: new Date().toLocaleString() 
-                })
+                body: JSON.stringify({ isPaid: true, plan: plan, approvedAt: new Date().toLocaleString() })
             }).then(() => {
-                if(key) fetch(`${dbURL}/requests/${key}.json`, { method: 'DELETE' });
-                alert("Approved! User is now Premium.");
-                loadData();
-            }).catch(e => alert("Error approving user"));
+                if(key) deleteReq(key);
+                loadAll();
+            });
         }
 
-        setInterval(loadData, 4000);
-        loadData();
+        function deleteReq(key) {
+            fetch(`${dbURL}/requests/${key}.json`, { method: 'DELETE' }).then(() => loadAll());
+        }
+
+        function removeUser(uid) {
+            if(confirm("Are you sure? User will lose premium access!")) {
+                fetch(`${dbURL}/users/${uid}.json`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ isPaid: false, plan: "Expired" })
+                }).then(() => loadAll());
+            }
+        }
+
+        function sendNotice() {
+            const text = document.getElementById('notice_text').value;
+            fetch(`${dbURL}/settings/notice.json`, {
+                method: 'PUT',
+                body: JSON.stringify(text)
+            }).then(() => alert("Notice Updated Successfully!"));
+        }
+
+        function searchUsers() {
+            const input = document.getElementById('user_search').value.toLowerCase();
+            const rows = document.querySelectorAll('#user_table_body tr');
+            rows.forEach(row => {
+                row.innerText.toLowerCase().includes(input) ? row.style.display = "" : row.style.display = "none";
+            });
+        }
+
+        setInterval(loadAll, 10000); // 10s auto-refresh
+        loadAll();
     </script>
 </body>
 </html>
